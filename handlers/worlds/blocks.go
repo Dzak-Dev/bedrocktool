@@ -10,11 +10,17 @@ import (
 )
 
 var traitLookup = map[string][]any{
+	"minecraft:cardinal_direction": {
+		"north", "east", "south", "west",
+	},
 	"minecraft:facing_direction": {
 		"north", "east", "south", "west", "down", "up",
 	},
-	"minecraft:cardinal_direction": {
-		"north", "east", "south", "west",
+	"minecraft:corner_and_cardinal_direction": {
+		"inner_left", "inner_right", "outer_left", "outer_right", "none",
+	},
+	"minecraft:sixteen_way_rotation": {
+		"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16",
 	},
 	"minecraft:vertical_half": {
 		"top", "bottom",
