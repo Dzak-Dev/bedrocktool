@@ -80,7 +80,7 @@ type ResourcePackHandler struct {
 	// map[pack uuid]map[pack size]pack
 	// this way servers with multiple packs on the same uuid work
 	packsDownloading atomic.Int32
-	downloadingPacks map[string]downloadingPack
+	downloadingPacks map[uuid.UUID]downloadingPack
 	awaitingPack     *downloadingPack
 	packDownloads    chan *packet.ResourcePackDataInfo
 
@@ -121,7 +121,7 @@ func NewResourcePackHandler(ctx context.Context, addedPacks []resource.Pack) *Re
 		cache:                  &packCache{},
 		receivedRemotePackInfo: make(chan struct{}),
 		receivedRemoteStack:    make(chan struct{}),
-		downloadingPacks:       make(map[string]downloadingPack),
+		downloadingPacks:       make(map[uuid.UUID]downloadingPack),
 	}
 	return r
 }
@@ -239,7 +239,7 @@ func (r *ResourcePackHandler) OnResourcePacksInfo(pk *packet.ResourcePacksInfo) 
 	for _, pack := range pk.TexturePacks {
 		packID := pack.UUID.String() + "_" + pack.Version
 
-		_, alreadyDownloading := r.downloadingPacks[packID]
+		_, alreadyDownloading := r.downloadingPacks[pack.UUID]
 		if alreadyDownloading {
 			r.log.Warnf("duplicate texture pack entry %v in resource pack info", pack.UUID)
 			continue
@@ -277,7 +277,7 @@ func (r *ResourcePackHandler) OnResourcePacksInfo(pk *packet.ResourcePacksInfo) 
 		}
 
 		packsToDownload = append(packsToDownload, packID)
-		r.downloadingPacks[packID] = downloadingPack{
+		r.downloadingPacks[pack.UUID] = downloadingPack{
 			size:       pack.Size,
 			newFrag:    make(chan *packet.ResourcePackChunkData),
 			contentKey: pack.ContentKey,
@@ -341,7 +341,12 @@ func (r *ResourcePackHandler) OnResourcePacksInfo(pk *packet.ResourcePacksInfo) 
 }
 
 func (r *ResourcePackHandler) downloadResourcePack(pk *packet.ResourcePackDataInfo) error {
-	pack, ok := r.downloadingPacks[pk.UUID]
+	packID, err := uuid.Parse(pk.UUID)
+	if err != nil {
+		return err
+	}
+
+	pack, ok := r.downloadingPacks[packID]
 	if !ok {
 		// We either already downloaded the pack or we got sent an invalid UUID, that did not match any pack
 		// sent in the ResourcePacksInfo packet.
@@ -356,7 +361,7 @@ func (r *ResourcePackHandler) downloadResourcePack(pk *packet.ResourcePackDataIn
 	}
 
 	// Remove the resource pack from the downloading packs and add it to the awaiting packets.
-	delete(r.downloadingPacks, pk.UUID)
+	delete(r.downloadingPacks, packID)
 	r.awaitingPack = &pack
 	pack.chunkSize = pk.DataChunkSize
 
