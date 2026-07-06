@@ -192,10 +192,10 @@ func (r *ResourcePackHandler) downloadFromUrl(pack protocol.TexturePackInfo) err
 	return r.finishedPack(pack.UUID.String()+"_"+pack.Version, newPack)
 }
 
-func (r *ResourcePackHandler) finishedPack(id string, pack resource.Pack) error {
+func (r *ResourcePackHandler) finishedPack(idVer string, pack resource.Pack) error {
 	r.lockResourcePacks.Lock()
 	r.resourcePacks = append(r.resourcePacks, pack)
-	r.finishedPacks = append(r.finishedPacks, id)
+	r.finishedPacks = append(r.finishedPacks, idVer)
 	err := r.OnFinishedPack(pack)
 	r.lockResourcePacks.Unlock()
 	if err != nil {
@@ -207,7 +207,7 @@ func (r *ResourcePackHandler) finishedPack(id string, pack resource.Pack) error 
 		case <-r.ctx.Done():
 			return r.ctx.Err()
 		}
-		if slices.Contains(r.packsRequestedFromServer, id) {
+		if slices.Contains(r.packsRequestedFromServer, idVer) {
 			r.nextPackToClient <- pack
 		}
 	}
@@ -448,29 +448,10 @@ func (r *ResourcePackHandler) downloadResourcePack(pk *packet.ResourcePackDataIn
 		return fmt.Errorf("invalid full resource pack data for UUID %v: %v", pk.UUID, err)
 	}
 
-	err = r.finishedPack(pk.UUID, newPack)
+	err = r.finishedPack(pack.ID.String()+"_"+pack.Version, newPack)
 	if err != nil {
 		return err
 	}
-
-	// Finally we add the resource to the resource packs slice.
-	r.lockResourcePacks.Lock()
-	r.resourcePacks = append(r.resourcePacks, newPack)
-	r.finishedPacks = append(r.finishedPacks, pk.UUID)
-	err = r.OnFinishedPack(newPack)
-	r.lockResourcePacks.Unlock()
-	if err != nil {
-		return err
-	}
-
-	// if theres a client and the client needs resource packs send it to its queue
-	if r.nextPackToClient != nil {
-		if slices.Contains(r.packsRequestedFromServer, pk.UUID) {
-			r.log.Debugf("sending pack %s from server to client", newPack.Name())
-			r.nextPackToClient <- newPack
-		}
-	}
-
 	return nil
 }
 
@@ -514,7 +495,7 @@ func (r *ResourcePackHandler) OnResourcePackStack(pk *packet.ResourcePackStack) 
 		if err != nil {
 			continue
 		}
-		if !r.hasPack(id, pack.Version, false) {
+		if !r.hasPack(id, pack.Version) {
 			return fmt.Errorf("texture pack {uuid=%v, version=%v} not downloaded", pack.UUID, pack.Version)
 		}
 	}
@@ -812,7 +793,7 @@ var exemptedPacks = map[string]bool{
 	"0fba4063-dba1-4281-9b89-ff9390653530_1.0.0": true,
 }
 
-func (r *ResourcePackHandler) hasPack(id uuid.UUID, version string, hasBehaviours bool) bool {
+func (r *ResourcePackHandler) hasPack(id uuid.UUID, version string) bool {
 	search := id.String() + "_" + version
 	if exemptedPacks[search] {
 		// The server may send this resource pack on the stack without sending it in the info, as the client
