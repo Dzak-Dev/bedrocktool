@@ -337,23 +337,19 @@ func (s *Session) connect() error {
 
 	rpHandler := s.newResourcePackHandler(ctx)
 	if s.withClient {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			err := s.connectClient(ctx, rpHandler)
 			if err != nil && !errors.Is(err, context.Canceled) {
 				cancelCause(err)
 			}
-		}()
+		})
 	}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		err := s.connectServer(ctx, rpHandler)
 		if err != nil && !errors.Is(err, context.Canceled) {
 			cancelCause(err)
 		}
-	}()
+	})
 	wg.Wait()
 	if err := context.Cause(ctx); err != nil {
 		return err

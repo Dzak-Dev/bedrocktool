@@ -76,7 +76,7 @@ func (bp *Pack) AddEntity(EntityType string, attr []protocol.AttributeValue, met
 	entry, ok := bp.entities[EntityType]
 	if !ok {
 		entry = &entityBehaviour{
-			FormatVersion: bp.formatVersion,
+			FormatVersion: "1.26.30",
 			MinecraftEntity: &MinecraftEntity{
 				Description: &EntityDescription{
 					Identifier:   EntityType,
