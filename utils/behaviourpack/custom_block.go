@@ -92,7 +92,7 @@ func processComponent(name string, value map[string]any, version *string) (strin
 		}
 		boxes, _ := value["boxes"].([]any)
 		if len(boxes) == 0 {
-			return name, false
+			return name, true
 		}
 
 		var boxesData []map[string]any
