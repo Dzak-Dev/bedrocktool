@@ -87,9 +87,7 @@ func processComponent(name string, value map[string]any, version *string) (strin
 		if enabled, ok := value["enabled"].(uint8); ok && enabled == 0 {
 			return name, false
 		}
-		if *version < "1.26.30" {
-			*version = "1.26.30"
-		}
+
 		boxes, _ := value["boxes"].([]any)
 		if len(boxes) == 0 {
 			return name, true
@@ -108,6 +106,9 @@ func processComponent(name string, value map[string]any, version *string) (strin
 				"origin": []any{minX - 8, minY, minZ - 8},
 				"size":   []any{maxX - minX, maxY - minY, maxZ - minZ},
 			})
+		}
+		if len(boxesData) == 1 {
+			return name, boxesData[0]
 		}
 		return name, boxesData
 

@@ -138,15 +138,11 @@ func (bp *Pack) AddEntity(EntityType string, attr []protocol.AttributeValue, met
 		}
 	}
 
-	entry.MinecraftEntity.Components["minecraft:pushable"] = map[string]any{
-		"is_pushable":           false,
-		"is_pushable_by_piston": false,
+	entry.MinecraftEntity.Components["minecraft:physics"] = map[string]any{
+		"has_collision": false,
+		"has_gravity":   false,
 	}
-	entry.MinecraftEntity.Components["minecraft:damage_sensor"] = map[string]any{
-		"triggers": map[string]any{
-			"deals_damage": false,
-		},
-	}
+
 	entry.MinecraftEntity.Components["minecraft:is_stackable"] = map[string]any{}
 	entry.MinecraftEntity.Components["minecraft:push_through"] = 1
 
