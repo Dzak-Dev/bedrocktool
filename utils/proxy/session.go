@@ -149,9 +149,6 @@ func (s *Session) newResourcePackHandler(ctx context.Context) *resourcepacks.Res
 	rpHandler.OnFinishedPack = func(p resource.Pack) error {
 		return s.handlers.OnFinishedPack(s, p)
 	}
-	rpHandler.FilterDownloadResourcePacks = func(id string) bool {
-		return s.handlers.FilterResourcePack(s, id)
-	}
 	return rpHandler
 }
 
